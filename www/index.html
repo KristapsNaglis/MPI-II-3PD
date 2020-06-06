@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Kristaps Naglis - MD 3</title>
+    <script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+    <!--<link href="https://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.css" rel="stylesheet"/>-->
+    <link href="index.css" rel="stylesheet"/>
+
+    <script type="text/javascript" charset="utf-8" src="cordova.js"></script>
+    <script type="text/javascript" charset="utf-8">
+
+        // Wait for device API libraries to load
+        //
+        document.addEventListener("deviceready", onDeviceReady, false);
+
+        // device APIs are available
+        //
+        function onDeviceReady() {
+            var options = { enableHighAccuracy: true };
+            navigator.geolocation.getCurrentPosition(onSuccess, onError, options);
+        }
+
+        // onSuccess Geolocation
+        //
+        function onSuccess(position) {
+            weatherReport(position);
+            initMap(position);
+            initMapPlaces(position);
+        }
+
+        // onError Callback receives a PositionError object
+        //
+        function onError(error) {
+            alert('code: ' + error.code + '\n' +
+                'message: ' + error.message + '\n');
+        }
+
+        function weatherReport(position) {
+            var element = document.getElementById('weatherReport');
+
+            var apiKey = "923f86a82fe9d8b1c77b2a1cbee518f9";
+            var lat = position.coords.latitude;
+            var lon = position.coords.longitude;
+
+            var url = "https://api.openweathermap.org/data/2.5/weather?lat=" + lat + "&lon=" + lon+ "&appid=" + apiKey;
+
+            $.ajax({
+                type: "GET",
+                url: url,
+                data: $(this).serialize(),
+                success: function(data) {
+                    element.innerHTML =
+                        "City: " + data.name + '<br />' +
+                        "Conditions: " + data.weather[0].main + '<br />' +
+                        "Temperature: " + data.main.temp + '<br />' +
+                        "Feels Like: " + data.main.feels_like + '<br />' +
+                        "Humidity: " + data.main.humidity + '<br />' +
+                        "Pressure: " + data.main.pressure + '<br />'
+                }
+            });
+        }
+
+        function initMap(position){
+            var map;
+            var latlng = {lat: position.coords.latitude, lng: position.coords.longitude};
+            map = new google.maps.Map(document.getElementById('map'), {
+                center: latlng,
+                zoom: 15
+            });
+            var marker = new google.maps.Marker({
+                position: latlng,
+                map: map,
+                title: 'Your Location!'
+            });
+        }
+
+        // Nearby places map
+        function initMapPlaces(position) {
+            var map;
+            var service;
+            var infowindow;
+            var query = "Maxima";
+
+            var latlng = {lat: position.coords.latitude, lng: position.coords.longitude};
+
+            infowindow = new google.maps.InfoWindow();
+
+            map = new google.maps.Map(
+                document.getElementById('mapPlaces'), {center: latlng, zoom: 15});
+
+            var request = {
+                query: query,
+                fields: ['name', 'geometry'],
+            };
+
+            service = new google.maps.places.PlacesService(map);
+
+            service.textSearch(request, function(results, status) {
+                if (status === google.maps.places.PlacesServiceStatus.OK) {
+                    for (var i = 0; i < results.length; i++) {
+                        createMarker(results[i]);
+                    }
+
+                    map.setCenter(results[0].geometry.location);
+                }
+            });
+        }
+
+        function createMarker(place) {
+            var marker = new google.maps.Marker({
+                map: map,
+                position: place.geometry.location
+            });
+
+            google.maps.event.addListener(marker, 'click', function() {
+                infowindow.setContent(place.name);
+                infowindow.open(map, this);
+            });
+        }
+    </script>
+
+</head>
+
+<body>
+
+<h1>Weather Report</h1>
+<p id="weatherReport">Loading</p>
+
+<h1>Your Location</h1>
+<div id="map"  style="width:100vw; height: 20vh;"></div>
+<br>
+
+<h1>Maximas around you</h1>
+<div id="mapPlaces"  style="width:100vw; height: 20vh;"></div>
+
+</body>
+
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyARafH5i0d7tO12CVNHB-JuQTYeHNHj_Kk&libraries=places&callback=initMap"></script>
+<script src="https://code.jquery.com/jquery-2.1.4.min.js"></script>
+
+</html>
